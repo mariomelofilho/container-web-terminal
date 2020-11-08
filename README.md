@@ -1,17 +1,15 @@
-# `docker exec` web console
+# Container Web Terminal
 
-This image is originally inspirated by [this gist](https://gist.github.com/Humerus/0268c62f359f7ee1ee2d).
-
-The container use `socat` to bound Docker socket to a TCP port, so that I could avoid to change the `http.Post` part in the Go server to talk directly to a UNIX socket.
+This project is forked from [bitbull-team's docker-exec-web-console repo](https://github.com/bitbull-team/docker-exec-web-console) which is originally inspirated by [this gist](https://gist.github.com/Humerus/0268c62f359f7ee1ee2d).
 
 You can launch the container in this way:
 
 ```
 docker run \
-	--name docker-exec-web-console \
+	--name container-web-console \
 	-p 9999:8888 \
 	-v /var/run/docker.sock:/var/run/docker.sock \
-	bitbull/docker-exec-web-console
+	quay.io/enterprisecoding/container-web-console
 ```
 
 Then you can reach the console at the url `http://localhost:9999`
@@ -20,11 +18,11 @@ It's possible to pass a context path to which the container will responds, using
 
 ```
 docker run \
-	--name docker-exec-web-console \
+	--name container-web-console \
 	-p 9999:8888 \
 	-e "CONTEXT_PATH=/webconsole" \
 	-v /var/run/docker.sock:/var/run/docker.sock \
-	bitbull/docker-exec-web-console
+	quay.io/enterprisecoding/container-web-console
 ```
 
 With the above example, the console will be reachable at the url `http://localhost:9999/webconsole`
@@ -35,14 +33,8 @@ You can pass the command to execute passing it via `cmd` querystring parameter (
 
 ## Build the image
 
-The image is based on `alpine:latest`, so you need to compile the server for Linux with all libs statically linked:
+The image is designed to have a multi-stage docker file. Base container ise build on `alpine:latest` and compiler part uses `golang:1.15.4-alpine`. All you have to do is build container image using following command;
 
 ```
-CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
-```
-
-then you can build as usual:
-
-```
-docker build -t bitbull/docker-exec-web-console .
+docker build -t quay.io/enterprisecoding/container-web-console .
 ```

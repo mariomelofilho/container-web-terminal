@@ -14,28 +14,53 @@ import (
 	"net/http/httputil"
 	"time"
 	"strings"
+	"path/filepath"
 
 	"github.com/davecgh/go-spew/spew"
 	"golang.org/x/net/websocket"
+	"github.com/gorilla/handlers"
 )
 
 var port = flag.String("port", "8888", "Port for server")
 var host = flag.String("host", "127.0.0.1:2735", "Docker host")
 
-var contextPath = "/"
+var contextPath = ""
+var wwwroot = ""
 
 func main() {
-	flag.Parse()
+	fmt.Println("Application starting..")
 
+	flag.Parse()
+	
 	if cp := os.Getenv("CONTEXT_PATH"); cp != "" {
 		contextPath = strings.TrimRight(cp, "/")
 	}
 
+	if wr := os.Getenv("WWWROOT_PATH"); wr != "" {
+		wwwroot = strings.TrimRight(wr, "/")
+	} else {
+		executableFolderPath, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		if err != nil {
+			panic(err)
+		}
+
+		wwwroot = executableFolderPath + "/wwwroot"
+	}
+
+	fmt.Println("contextPath is "+contextPath+"/")
+	fmt.Println("wwwroot is "+wwwroot)
+
+
 	http.Handle(contextPath + "/exec/", websocket.Handler(ExecContainer))
-        http.Handle(contextPath + "/", http.StripPrefix(contextPath + "/", http.FileServer(http.Dir("./"))))
-	if err := http.ListenAndServe(":"+*port, nil); err != nil {
+
+	http.Handle(contextPath + "/", http.StripPrefix(contextPath + "/", http.FileServer(http.Dir(wwwroot))))
+		
+	fmt.Println("Waiting for http requests on port "+*port)
+	if err := http.ListenAndServe(":"+*port, handlers.LoggingHandler(os.Stdout, http.DefaultServeMux)); err != nil {
 		panic(err)
 	}
+
+	fmt.Println("Application stoping..")
 }
 
 func ExecContainer(ws *websocket.Conn) {
