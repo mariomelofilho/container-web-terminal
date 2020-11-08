@@ -58,7 +58,7 @@
                 cursorBlink: true,
             });
 
-            term.writeln('Welcome to container web terminal');
+            term.writeln('\x1b[0;36mWelcome to container web terminal\x1b[0m');
             term.writeln('');
 
             term.onData(function (data) {
