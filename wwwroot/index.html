@@ -1,88 +1,93 @@
 <html>
+
 <head>
     <link rel="stylesheet" href="xterm/xterm.css" />
     <script src="xterm/xterm.js"></script>
     <style>
-    body {
-        padding: 0;
-        margin: 5px;
-        background-color: #000;
-    }
-    
-    #container-terminal {
-		width: 800px;
-		height: 450px;
-		margin: 0;
-		padding: 0;
-	}
+        body {
+            padding: 0;
+            margin: 5px;
+            background-color: #000;
+        }
+
+        #container-terminal {
+            width: 800px;
+            height: 450px;
+            margin: 0;
+            padding: 0;
+        }
     </style>
     <title>Docker Exec Web Console</title>
 </head>
+
 <body>
     <div id="container-terminal"></div>
-    
+
     <script type="text/javascript">
-		var term, websocket, containerId = '', command = '';
-		
+        var term, websocket, containerId = '', command = '';
+
         function getQueryVar(variable) {
             var query = window.location.search.substring(1);
             var vars = query.split("&");
-            for (var i=0; i<vars.length; i++) {
+            for (var i = 0; i < vars.length; i++) {
                 var pair = vars[i].split("=");
                 if (pair[0] == variable) {
-                     return pair[1];
+                    return pair[1];
                 }
             }
-            
+
             return false;
         }
-        
+
         containerId = getQueryVar('cid');
         if (!containerId) {
             containerId = prompt('Container ID');
         }
-        
+
         command = getQueryVar('cmd');
         if (!command) {
             command = '/bin/bash';
         }
 
-	websocket = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + window.location.pathname + "exec/" + containerId + ',' + window.btoa(command));
+        websocket = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + window.location.pathname + "exec/" + containerId + ',' + window.btoa(command));
 
-        websocket.onopen = function(evt) {
-			term = new Terminal({
-				//cols: 100,
-				//rows: 30,
-				screenKeys: true,
-				useStyle: true,
-				cursorBlink: true,
-			});
-			
-			term.on('data', function(data) {
-				websocket.send(data);
-			});
-			
-			term.on('title', function(title) {
-				document.title = title;
-			});
-			
-			term.open(document.getElementById('container-terminal'));
-			
-			websocket.onmessage = function(evt) {
-				term.write(evt.data);
-			}
-			
-			websocket.onclose = function(evt) {
-				term.write("Session terminated");
-				term.destroy();
-			}
-			
-			websocket.onerror = function(evt) {
-				if (typeof console.log == "function") {
-					console.log(evt)
-				}
-			}
-		}
+        websocket.onopen = function (evt) {
+            term = new Terminal({
+                screenKeys: true,
+                useStyle: true,
+                cursorBlink: true,
+            });
+
+            term.writeln('Welcome to container web terminal');
+            term.writeln('');
+
+            term.onData(function (data) {
+                websocket.send(data);
+            });
+
+            term.onTitleChange(function (title) {
+                document.title = title;
+            });
+
+            term.open(document.getElementById('container-terminal'));
+            term.focus();
+
+            websocket.onmessage = function (evt) {
+                term.write(evt.data);
+            }
+
+            websocket.onclose = function (evt) {
+                term.write("Session terminated");
+                term.destroy();
+            }
+
+            websocket.onerror = function (evt) {
+                if (typeof console.log == "function") {
+                    console.log(evt)
+                }
+            }
+        }
     </script>
-    </body>
+</body>
+
 </html>
