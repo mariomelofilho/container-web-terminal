@@ -23,7 +23,11 @@ if (!command) {
     command = '/bin/bash';
 }
 
-websocket = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + window.location.pathname + "exec/" + containerId + ',' + window.btoa(command));
+if (window.location.protocol == "https:"){
+        websocket = new WebSocket("wss://" + window.location.hostname + ":" + window.location.port + window.location.pathname + "exec/" + containerId + ',' + window.btoa(command));
+} else {
+        websocket = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + window.location.pathname + "exec/" + containerId + ',' + window.btoa(command));
+  }
 
 websocket.onopen = function (evt) {
     term = new Terminal({
